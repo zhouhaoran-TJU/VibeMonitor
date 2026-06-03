@@ -103,6 +103,9 @@ public final class MonitorService extends Service {
     }
 
     private void showHighTempAlert(float temp, float threshold) {
+        if (HighTempOverlay.show(this, temp, threshold)) {
+            return;
+        }
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (manager == null) {
             return;
