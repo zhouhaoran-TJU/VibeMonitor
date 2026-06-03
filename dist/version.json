@@ -1,9 +1,9 @@
 {
-  "versionCode": 12,
-  "versionName": "2.1-beta",
+  "versionCode": 13,
+  "versionName": "2.2-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1457038,
-  "sha256": "74d997332fc0810932763d8601fc8925ade89536c8fa1c6e4f96e24c96240192",
+  "apkSize": 1459352,
+  "sha256": "64fa0074357243834f11acaf0f35205161008b7e2b3faf8d46c680c9a518b5fe",
   "publishedAt": "2026-06-03",
-  "notes": "高温告警阈值改为可自定义输入，可在顶部“阈值”入口设置30到120°C的告警温度；告警复位温度为阈值下方5°C。"
+  "notes": "高温告警升级为全局提醒：后台服务检测到温度超过阈值时发送高优先级通知和全屏告警页，即使 App 在后台也能提醒用户。"
 }

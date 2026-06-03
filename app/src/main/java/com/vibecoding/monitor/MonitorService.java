@@ -14,11 +14,14 @@ import android.os.Looper;
 public final class MonitorService extends Service {
     private static final long SAMPLE_INTERVAL_MS = 60000L;
     private static final int NOTIFICATION_ID = 2101;
+    private static final int HIGH_TEMP_NOTIFICATION_ID = 2102;
     private static final String CHANNEL_ID = "monitor_recording";
+    private static final String ALERT_CHANNEL_ID = "temperature_alerts";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private MetricSampler sampler;
     private MetricHistoryStore historyStore;
+    private boolean highTempAlertActive;
 
     private final Runnable sampleRunnable = new Runnable() {
         @Override
@@ -26,6 +29,7 @@ public final class MonitorService extends Service {
             MetricSnapshot snapshot = sampler.sample();
             historyStore.append(snapshot);
             MonitorWidgetProvider.updateAllWidgets(MonitorService.this, snapshot);
+            maybeAlertHighTemp(snapshot);
             handler.postDelayed(this, SAMPLE_INTERVAL_MS);
         }
     };
@@ -36,6 +40,7 @@ public final class MonitorService extends Service {
         sampler = new MetricSampler(this);
         historyStore = new MetricHistoryStore(this);
         createNotificationChannel();
+        createAlertChannel();
         startForeground(NOTIFICATION_ID, buildNotification("正在记录性能数据"));
         handler.removeCallbacks(sampleRunnable);
         sampleRunnable.run();
@@ -80,6 +85,54 @@ public final class MonitorService extends Service {
                 .build();
     }
 
+    private void maybeAlertHighTemp(MetricSnapshot snapshot) {
+        float temp = snapshot.displayTempC();
+        if (Float.isNaN(temp)) {
+            return;
+        }
+        float threshold = TemperatureWarningSettings.threshold(this);
+        if (temp < threshold - TemperatureWarningSettings.HIGH_TEMP_RESET_GAP_C) {
+            highTempAlertActive = false;
+            return;
+        }
+        if (temp < threshold || highTempAlertActive) {
+            return;
+        }
+        highTempAlertActive = true;
+        showHighTempAlert(temp, threshold);
+    }
+
+    private void showHighTempAlert(float temp, float threshold) {
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (manager == null) {
+            return;
+        }
+        Intent alertIntent = new Intent(this, HighTempAlertActivity.class);
+        alertIntent.putExtra(HighTempAlertActivity.EXTRA_TEMP_C, temp);
+        alertIntent.putExtra(HighTempAlertActivity.EXTRA_THRESHOLD_C, threshold);
+        alertIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent alertPendingIntent = PendingIntent.getActivity(this, 1, alertIntent, flags);
+        Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                ? new Notification.Builder(this, ALERT_CHANNEL_ID)
+                : new Notification.Builder(this);
+        Notification notification = builder
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("温度过高警告")
+                .setContentText("当前温度 " + Math.round(temp)
+                        + "°C，超过 " + TemperatureWarningSettings.formatThreshold(threshold))
+                .setContentIntent(alertPendingIntent)
+                .setFullScreenIntent(alertPendingIntent, true)
+                .setPriority(Notification.PRIORITY_MAX)
+                .setCategory(Notification.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .build();
+        manager.notify(HIGH_TEMP_NOTIFICATION_ID, notification);
+    }
+
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return;
@@ -89,6 +142,22 @@ public final class MonitorService extends Service {
                 "性能监控记录",
                 NotificationManager.IMPORTANCE_LOW);
         channel.setShowBadge(false);
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.createNotificationChannel(channel);
+        }
+    }
+
+    private void createAlertChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+        NotificationChannel channel = new NotificationChannel(
+                ALERT_CHANNEL_ID,
+                "高温告警",
+                NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("温度超过阈值时弹出全局提醒");
+        channel.setShowBadge(true);
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (manager != null) {
             manager.createNotificationChannel(channel);
