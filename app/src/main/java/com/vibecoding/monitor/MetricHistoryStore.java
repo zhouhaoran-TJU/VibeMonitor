@@ -13,8 +13,8 @@ import java.util.List;
 final class MetricHistoryStore {
     private static final String PREFS = "metric_history";
     private static final String KEY_SAMPLES = "samples";
-    private static final int MAX_SAMPLES = 240;
-    private static final long MIN_SAMPLE_INTERVAL_MS = 25000L;
+    private static final int MAX_SAMPLES = 1440;
+    private static final long MIN_SAMPLE_INTERVAL_MS = 55000L;
 
     private final SharedPreferences preferences;
 
@@ -29,6 +29,10 @@ final class MetricHistoryStore {
             return;
         }
         snapshots.add(snapshot);
+        long cutoffMs = snapshot.timestampMs - 24L * 60L * 60L * 1000L;
+        while (!snapshots.isEmpty() && snapshots.get(0).timestampMs < cutoffMs) {
+            snapshots.remove(0);
+        }
         while (snapshots.size() > MAX_SAMPLES) {
             snapshots.remove(0);
         }

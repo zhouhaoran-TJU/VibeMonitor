@@ -9,6 +9,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.text.TextPaint;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.text.SimpleDateFormat;
@@ -18,6 +19,9 @@ import java.util.List;
 import java.util.Locale;
 
 final class MonitorDashboardView extends View {
+    private static final long DAY_WINDOW_MS = 24L * 60L * 60L * 1000L;
+    private static final long TREND_WINDOW_MS = 2L * 60L * 60L * 1000L;
+    private static final long MINUTE_MS = 60L * 1000L;
     private static final int BLUE = Color.rgb(37, 99, 235);
     private static final int GREEN = Color.rgb(14, 159, 110);
     private static final int AMBER = Color.rgb(245, 158, 11);
@@ -31,8 +35,11 @@ final class MonitorDashboardView extends View {
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.CHINA);
     private final SimpleDateFormat axisFormat = new SimpleDateFormat("HH:mm", Locale.CHINA);
     private final ArrayList<MetricSnapshot> history = new ArrayList<>();
+    private final ArrayList<MetricSnapshot> visibleHistory = new ArrayList<>();
     private MetricSnapshot snapshot = MetricSnapshot.empty();
     private Palette palette = Palette.defaultStyle();
+    private long trendEndMs = 0L;
+    private float downX;
 
     MonitorDashboardView(Context context) {
         super(context);
@@ -56,7 +63,25 @@ final class MonitorDashboardView extends View {
         if (snapshots != null) {
             history.addAll(snapshots);
         }
+        if (trendEndMs == 0L && !history.isEmpty()) {
+            trendEndMs = history.get(history.size() - 1).timestampMs;
+        }
+        clampTrendWindow();
         invalidate();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                downX = event.getX();
+                return true;
+            case MotionEvent.ACTION_UP:
+                handleSwipe(event.getX() - downX);
+                return true;
+            default:
+                return true;
+        }
     }
 
     @Override
@@ -68,7 +93,7 @@ final class MonitorDashboardView extends View {
         float y = getPaddingTop();
 
         drawHeader(canvas, left, right, y);
-        y += dp(72);
+        y += dp(62);
 
         float heroHeight = dp(164);
         drawHero(canvas, left, y, right - left, heroHeight);
@@ -100,9 +125,7 @@ final class MonitorDashboardView extends View {
         textPaint.setFakeBoldText(false);
         textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(12));
-        canvas.drawText("后台记录开启 · 最近 " + history.size() + " 条样本", left, y + dp(49), textPaint);
-
-        drawPill(canvas, left, y + dp(56), dp(88), dp(22), "持续监控", GREEN);
+        canvas.drawText("24小时记录 · " + history.size() + " 条样本 · 最高 " + formatTemp(maxTemp24h()), left, y + dp(49), textPaint);
     }
 
     private void drawHero(Canvas canvas, float x, float y, float width, float height) {
@@ -200,9 +223,9 @@ final class MonitorDashboardView extends View {
         textPaint.setFakeBoldText(true);
         textPaint.setColor(palette.text);
         textPaint.setTextSize(sp(17));
-        canvas.drawText("最近趋势", x + dp(14), y + dp(30), textPaint);
+        canvas.drawText("温度趋势", x + dp(14), y + dp(30), textPaint);
 
-        drawLegend(canvas, x + width - dp(138), y + dp(20), BLUE, "CPU");
+        buildVisibleHistory();
         drawLegend(canvas, x + width - dp(82), y + dp(20), RED, "温度");
 
         float chartX = x + dp(34);
@@ -218,29 +241,29 @@ final class MonitorDashboardView extends View {
         }
         drawYAxisLabels(canvas, chartX, chartY, chartH);
         drawTimeAxis(canvas, chartX, chartY + chartH, chartW);
-        drawHistory(canvas, true, chartX, chartY, chartW, chartH, BLUE, 100f);
-        drawHistory(canvas, false, chartX, chartY, chartW, chartH, RED, 80f);
+        drawHistory(canvas, chartX, chartY, chartW, chartH, RED, 80f);
+        drawWindowHint(canvas, x, y, width, height);
         paint.setStyle(Paint.Style.FILL);
     }
 
     private void drawHistory(
             Canvas canvas,
-            boolean cpu,
             float x,
             float y,
             float width,
             float height,
             int color,
             float maxValue) {
-        if (history.size() < 2) {
+        if (visibleHistory.size() < 2) {
             return;
         }
         path.reset();
-        int count = history.size();
+        long startMs = trendEndMs - TREND_WINDOW_MS;
+        int count = visibleHistory.size();
         for (int index = 0; index < count; index++) {
-            MetricSnapshot item = history.get(index);
-            float value = cpu ? item.cpuPercent : item.displayTempC();
-            float px = x + width * index / (count - 1f);
+            MetricSnapshot item = visibleHistory.get(index);
+            float value = item.displayTempC();
+            float px = x + width * (item.timestampMs - startMs) / (float) TREND_WINDOW_MS;
             float py = y + height - height * clamp(value * 100f / maxValue) / 100f;
             if (index == 0) {
                 path.moveTo(px, py);
@@ -270,7 +293,7 @@ final class MonitorDashboardView extends View {
     }
 
     private void drawTimeAxis(Canvas canvas, float x, float y, float width) {
-        if (history.isEmpty()) {
+        if (trendEndMs == 0L) {
             return;
         }
         paint.setColor(palette.line);
@@ -279,10 +302,85 @@ final class MonitorDashboardView extends View {
         textPaint.setFakeBoldText(false);
         textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(10));
-        int last = history.size() - 1;
-        drawAxisTime(canvas, x, y + dp(18), history.get(0).timestampMs, Paint.Align.LEFT);
-        drawAxisTime(canvas, x + width / 2f, y + dp(18), history.get(last / 2).timestampMs, Paint.Align.CENTER);
-        drawAxisTime(canvas, x + width, y + dp(18), history.get(last).timestampMs, Paint.Align.RIGHT);
+        long startMs = trendEndMs - TREND_WINDOW_MS;
+        drawAxisTime(canvas, x, y + dp(18), startMs, Paint.Align.LEFT);
+        drawAxisTime(canvas, x + width / 2f, y + dp(18), startMs + TREND_WINDOW_MS / 2L, Paint.Align.CENTER);
+        drawAxisTime(canvas, x + width, y + dp(18), trendEndMs, Paint.Align.RIGHT);
+    }
+
+    private void drawWindowHint(Canvas canvas, float x, float y, float width, float height) {
+        textPaint.setFakeBoldText(false);
+        textPaint.setColor(palette.muted);
+        textPaint.setTextSize(sp(10));
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText("左右滑动查看24小时历史", x + width / 2f, y + height - dp(12), textPaint);
+        textPaint.setTextAlign(Paint.Align.LEFT);
+    }
+
+    private void buildVisibleHistory() {
+        visibleHistory.clear();
+        if (history.isEmpty()) {
+            return;
+        }
+        clampTrendWindow();
+        long startMs = trendEndMs - TREND_WINDOW_MS;
+        for (MetricSnapshot item : history) {
+            if (item.timestampMs >= startMs && item.timestampMs <= trendEndMs) {
+                visibleHistory.add(item);
+            }
+        }
+    }
+
+    private void handleSwipe(float deltaX) {
+        if (Math.abs(deltaX) < dp(36) || history.isEmpty()) {
+            return;
+        }
+        long shift = deltaX > 0f ? -TREND_WINDOW_MS : TREND_WINDOW_MS;
+        trendEndMs += shift;
+        clampTrendWindow();
+        invalidate();
+    }
+
+    private void clampTrendWindow() {
+        if (history.isEmpty()) {
+            trendEndMs = 0L;
+            return;
+        }
+        long latest = history.get(history.size() - 1).timestampMs;
+        long earliest = Math.max(latest - DAY_WINDOW_MS, history.get(0).timestampMs);
+        long minEnd = earliest + TREND_WINDOW_MS;
+        long maxEnd = latest;
+        if (trendEndMs == 0L || trendEndMs > maxEnd + MINUTE_MS) {
+            trendEndMs = maxEnd;
+        }
+        if (trendEndMs < minEnd) {
+            trendEndMs = minEnd;
+        }
+        if (trendEndMs > maxEnd) {
+            trendEndMs = maxEnd;
+        }
+    }
+
+    private float maxTemp24h() {
+        if (history.isEmpty()) {
+            return Float.NaN;
+        }
+        long latest = history.get(history.size() - 1).timestampMs;
+        long cutoff = latest - DAY_WINDOW_MS;
+        float max = Float.NaN;
+        for (MetricSnapshot item : history) {
+            if (item.timestampMs < cutoff) {
+                continue;
+            }
+            float temp = item.displayTempC();
+            if (Float.isNaN(temp)) {
+                continue;
+            }
+            if (Float.isNaN(max) || temp > max) {
+                max = temp;
+            }
+        }
+        return max;
     }
 
     private void drawAxisTime(Canvas canvas, float x, float y, long timestampMs, Paint.Align align) {

@@ -1,9 +1,9 @@
 {
-  "versionCode": 7,
-  "versionName": "1.6-beta",
+  "versionCode": 8,
+  "versionName": "1.7-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1454078,
-  "sha256": "e15b88f58d11d03b84cdad9cb9f35056107cf3f77cef5d41b39e605f5e4cb993",
+  "apkSize": 1455041,
+  "sha256": "99feb73cc8900576479fa7aedbc69297cb8ceb86d20780e8207c66f86bc7a7c0",
   "publishedAt": "2026-06-03",
-  "notes": "重新排版主界面，移除悬浮按钮造成的堆叠重叠，新增默认/暗夜两套显示风格并持久化用户选择。"
+  "notes": "移除持续监控标志，采样间隔改为1分钟，保留24小时温度记录；趋势图默认显示最近2小时并支持左右滑动查看历史，新增24小时最高温显示。"
 }

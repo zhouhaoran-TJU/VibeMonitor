@@ -12,7 +12,7 @@ import android.os.IBinder;
 import android.os.Looper;
 
 public final class MonitorService extends Service {
-    private static final long SAMPLE_INTERVAL_MS = 30000L;
+    private static final long SAMPLE_INTERVAL_MS = 60000L;
     private static final int NOTIFICATION_ID = 2101;
     private static final String CHANNEL_ID = "monitor_recording";
 
