@@ -1,9 +1,9 @@
 {
-  "versionCode": 6,
-  "versionName": "1.5-beta",
+  "versionCode": 7,
+  "versionName": "1.6-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1452701,
-  "sha256": "e927f73c2972082f9013e65ccf64f89c129cfc60249ead33ca353abca15f608d",
+  "apkSize": 1454078,
+  "sha256": "e15b88f58d11d03b84cdad9cb9f35056107cf3f77cef5d41b39e605f5e4cb993",
   "publishedAt": "2026-06-03",
-  "notes": "优化主界面排版，新增前台服务后台持续监控记录、历史样本持久化，并在最近趋势图中加入时间轴。"
+  "notes": "重新排版主界面，移除悬浮按钮造成的堆叠重叠，新增默认/暗夜两套显示风格并持久化用户选择。"
 }

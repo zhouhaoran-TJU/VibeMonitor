@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.Manifest;
+import android.content.SharedPreferences;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -18,18 +19,22 @@ import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public final class MainActivity extends Activity {
     private static final int PIN_WIDGET_REQUEST_CODE = 1001;
+    private static final String PREFS = "ui_prefs";
+    private static final String KEY_DISPLAY_STYLE = "display_style";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private MetricSampler sampler;
     private MetricHistoryStore historyStore;
     private MonitorDashboardView dashboardView;
     private UpdateManager updateManager;
+    private SharedPreferences uiPrefs;
+    private DisplayStyle displayStyle = DisplayStyle.DEFAULT;
+    private Button styleButton;
 
     private final Runnable refreshRunnable = new Runnable() {
         @Override
@@ -46,9 +51,12 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        uiPrefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        displayStyle = loadDisplayStyle();
         sampler = new MetricSampler(this);
         historyStore = new MetricHistoryStore(this);
         dashboardView = new MonitorDashboardView(this);
+        dashboardView.setDisplayStyle(displayStyle);
         updateManager = new UpdateManager(this);
         setContentView(buildContentView());
         requestNotificationPermission();
@@ -70,13 +78,14 @@ public final class MainActivity extends Activity {
     }
 
     private View buildContentView() {
-        FrameLayout root = new FrameLayout(this);
-        root.addView(dashboardView, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(displayStyle == DisplayStyle.NIGHT ? 0xff101722 : 0xfff6f7fb);
 
         LinearLayout actions = new LinearLayout(this);
-        actions.setOrientation(LinearLayout.VERTICAL);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        actions.setPadding(dp(12), dp(8), dp(12), dp(6));
 
         Button updateButton = buildActionButton("检查更新");
         updateButton.setOnClickListener(new View.OnClickListener() {
@@ -85,7 +94,7 @@ public final class MainActivity extends Activity {
                 updateManager.checkManually();
             }
         });
-        actions.addView(updateButton, new LinearLayout.LayoutParams(dp(116), dp(42)));
+        actions.addView(updateButton, new LinearLayout.LayoutParams(0, dp(40), 1f));
 
         Button addWidgetButton = buildActionButton("添加小组件");
         addWidgetButton.setOnClickListener(new View.OnClickListener() {
@@ -94,15 +103,28 @@ public final class MainActivity extends Activity {
                 requestAddWidget();
             }
         });
-        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(dp(116), dp(42));
-        buttonParams.topMargin = dp(6);
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(0, dp(40), 1f);
+        buttonParams.leftMargin = dp(8);
         actions.addView(addWidgetButton, buttonParams);
 
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(116), dp(90));
-        params.gravity = Gravity.TOP | Gravity.RIGHT;
-        params.topMargin = dp(14);
-        params.rightMargin = dp(18);
-        root.addView(actions, params);
+        styleButton = buildActionButton(styleLabel());
+        styleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                toggleDisplayStyle();
+            }
+        });
+        LinearLayout.LayoutParams styleParams = new LinearLayout.LayoutParams(0, dp(40), 0.8f);
+        styleParams.leftMargin = dp(8);
+        actions.addView(styleButton, styleParams);
+
+        root.addView(actions, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(54)));
+        root.addView(dashboardView, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1f));
         return root;
     }
 
@@ -112,6 +134,32 @@ public final class MainActivity extends Activity {
         button.setTextSize(13f);
         button.setAllCaps(false);
         return button;
+    }
+
+    private DisplayStyle loadDisplayStyle() {
+        String raw = uiPrefs.getString(KEY_DISPLAY_STYLE, DisplayStyle.DEFAULT.name());
+        try {
+            return DisplayStyle.valueOf(raw);
+        } catch (IllegalArgumentException ignored) {
+            return DisplayStyle.DEFAULT;
+        }
+    }
+
+    private void toggleDisplayStyle() {
+        displayStyle = displayStyle == DisplayStyle.DEFAULT ? DisplayStyle.NIGHT : DisplayStyle.DEFAULT;
+        uiPrefs.edit().putString(KEY_DISPLAY_STYLE, displayStyle.name()).apply();
+        dashboardView.setDisplayStyle(displayStyle);
+        if (styleButton != null) {
+            styleButton.setText(styleLabel());
+        }
+        View root = dashboardView.getRootView();
+        if (root != null) {
+            root.setBackgroundColor(displayStyle == DisplayStyle.NIGHT ? 0xff101722 : 0xfff6f7fb);
+        }
+    }
+
+    private String styleLabel() {
+        return displayStyle == DisplayStyle.NIGHT ? "暗夜风" : "默认";
     }
 
     private void requestNotificationPermission() {

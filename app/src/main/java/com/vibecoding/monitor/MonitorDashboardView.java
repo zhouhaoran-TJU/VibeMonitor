@@ -18,11 +18,6 @@ import java.util.List;
 import java.util.Locale;
 
 final class MonitorDashboardView extends View {
-    private static final int BG = Color.rgb(246, 247, 251);
-    private static final int SURFACE = Color.WHITE;
-    private static final int TEXT = Color.rgb(23, 32, 51);
-    private static final int MUTED = Color.rgb(102, 112, 133);
-    private static final int LINE = Color.rgb(229, 231, 235);
     private static final int BLUE = Color.rgb(37, 99, 235);
     private static final int GREEN = Color.rgb(14, 159, 110);
     private static final int AMBER = Color.rgb(245, 158, 11);
@@ -37,11 +32,18 @@ final class MonitorDashboardView extends View {
     private final SimpleDateFormat axisFormat = new SimpleDateFormat("HH:mm", Locale.CHINA);
     private final ArrayList<MetricSnapshot> history = new ArrayList<>();
     private MetricSnapshot snapshot = MetricSnapshot.empty();
+    private Palette palette = Palette.defaultStyle();
 
     MonitorDashboardView(Context context) {
         super(context);
-        setBackgroundColor(BG);
+        setBackgroundColor(palette.bg);
         setPadding(dp(16), dp(14), dp(16), dp(16));
+    }
+
+    void setDisplayStyle(DisplayStyle style) {
+        palette = style == DisplayStyle.NIGHT ? Palette.nightStyle() : Palette.defaultStyle();
+        setBackgroundColor(palette.bg);
+        invalidate();
     }
 
     void setSnapshot(MetricSnapshot snapshot) {
@@ -66,45 +68,45 @@ final class MonitorDashboardView extends View {
         float y = getPaddingTop();
 
         drawHeader(canvas, left, right, y);
-        y += dp(84);
+        y += dp(72);
 
-        float heroHeight = dp(176);
+        float heroHeight = dp(164);
         drawHero(canvas, left, y, right - left, heroHeight);
         y += heroHeight + dp(12);
 
         float gap = dp(8);
         float cardWidth = (right - left - gap) / 2f;
-        drawMetricCard(canvas, left, y, cardWidth, dp(88), "CPU", formatPercent(snapshot.cpuPercent),
+        drawMetricCard(canvas, left, y, cardWidth, dp(82), "CPU", formatPercent(snapshot.cpuPercent),
                 snapshot.coreCount + " 核", BLUE, snapshot.cpuPercent);
-        drawMetricCard(canvas, left + cardWidth + gap, y, cardWidth, dp(88), "内存",
+        drawMetricCard(canvas, left + cardWidth + gap, y, cardWidth, dp(82), "内存",
                 formatPercent(snapshot.memoryPercent), "已使用", GREEN, snapshot.memoryPercent);
-        y += dp(98);
-        drawMetricCard(canvas, left, y, cardWidth, dp(88), "电量",
+        y += dp(92);
+        drawMetricCard(canvas, left, y, cardWidth, dp(82), "电量",
                 formatPercent(snapshot.batteryPercent), snapshot.batteryState, AMBER, snapshot.batteryPercent);
-        drawMetricCard(canvas, left + cardWidth + gap, y, cardWidth, dp(88), "存储",
+        drawMetricCard(canvas, left + cardWidth + gap, y, cardWidth, dp(82), "存储",
                 formatPercent(snapshot.storagePercent), "内部空间", CYAN, snapshot.storagePercent);
-        y += dp(102);
+        y += dp(94);
 
         drawTrend(canvas, left, y, right - left, Math.max(dp(190), getHeight() - y - getPaddingBottom()));
     }
 
     private void drawHeader(Canvas canvas, int left, int right, float y) {
         textPaint.setShader(null);
-        textPaint.setColor(TEXT);
-        textPaint.setTextSize(sp(24));
+        textPaint.setColor(palette.text);
+        textPaint.setTextSize(sp(23));
         textPaint.setFakeBoldText(true);
-        canvas.drawText("手机性能监视器", left, y + dp(30), textPaint);
+        canvas.drawText("手机性能监视器", left, y + dp(27), textPaint);
 
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
-        textPaint.setTextSize(sp(13));
-        canvas.drawText("后台记录开启 · 最近 " + history.size() + " 条样本", left, y + dp(55), textPaint);
+        textPaint.setColor(palette.muted);
+        textPaint.setTextSize(sp(12));
+        canvas.drawText("后台记录开启 · 最近 " + history.size() + " 条样本", left, y + dp(49), textPaint);
 
-        drawPill(canvas, left, y + dp(64), dp(88), dp(24), "持续监控", GREEN);
+        drawPill(canvas, left, y + dp(56), dp(88), dp(22), "持续监控", GREEN);
     }
 
     private void drawHero(Canvas canvas, float x, float y, float width, float height) {
-        drawRoundRect(canvas, x, y, width, height, dp(8), SURFACE);
+        drawRoundRect(canvas, x, y, width, height, dp(8), palette.surface);
         float temp = snapshot.displayTempC();
         int tempColor = tempColor(temp);
 
@@ -116,22 +118,22 @@ final class MonitorDashboardView extends View {
         textPaint.setShader(null);
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setFakeBoldText(true);
-        textPaint.setColor(TEXT);
+        textPaint.setColor(palette.text);
         textPaint.setTextSize(sp(32));
         canvas.drawText(Float.isNaN(temp) ? "--" : Math.round(temp) + "°", centerX, centerY + dp(9), textPaint);
         textPaint.setTextSize(sp(12));
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
+        textPaint.setColor(palette.muted);
         canvas.drawText(snapshot.tempSource + " 温度", centerX, centerY + dp(35), textPaint);
         textPaint.setTextAlign(Paint.Align.LEFT);
 
         float infoX = x + width * 0.55f;
         textPaint.setFakeBoldText(true);
-        textPaint.setColor(TEXT);
+        textPaint.setColor(palette.text);
         textPaint.setTextSize(sp(18));
         canvas.drawText(temperatureState(temp), infoX, y + dp(46), textPaint);
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
+        textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(12));
         canvas.drawText("刷新 " + timeFormat.format(new Date(snapshot.timestampMs)), infoX, y + dp(68), textPaint);
 
@@ -143,7 +145,7 @@ final class MonitorDashboardView extends View {
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setStrokeWidth(dp(14));
-        paint.setColor(LINE);
+        paint.setColor(palette.line);
         rect.set(cx - radius, cy - radius, cx + radius, cy + radius);
         canvas.drawArc(rect, 140f, 260f, false, paint);
         paint.setColor(color);
@@ -163,28 +165,28 @@ final class MonitorDashboardView extends View {
             String subtitle,
             int color,
             float percent) {
-        drawRoundRect(canvas, x, y, width, height, dp(8), SURFACE);
+        drawRoundRect(canvas, x, y, width, height, dp(8), palette.surface);
 
         textPaint.setShader(null);
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
+        textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(12));
         canvas.drawText(title, x + dp(12), y + dp(22), textPaint);
 
         textPaint.setFakeBoldText(true);
-        textPaint.setColor(TEXT);
+        textPaint.setColor(palette.text);
         textPaint.setTextSize(sp(23));
         canvas.drawText(value, x + dp(12), y + dp(52), textPaint);
 
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
+        textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(11));
         canvas.drawText(subtitle, x + dp(12), y + dp(70), textPaint);
 
         float barX = x + dp(12);
         float barY = y + height - dp(15);
         float barW = width - dp(24);
-        paint.setColor(LINE);
+        paint.setColor(palette.line);
         rect.set(barX, barY, barX + barW, barY + dp(5));
         canvas.drawRoundRect(rect, dp(3), dp(3), paint);
         paint.setColor(color);
@@ -193,10 +195,10 @@ final class MonitorDashboardView extends View {
     }
 
     private void drawTrend(Canvas canvas, float x, float y, float width, float height) {
-        drawRoundRect(canvas, x, y, width, height, dp(8), SURFACE);
+        drawRoundRect(canvas, x, y, width, height, dp(8), palette.surface);
         textPaint.setShader(null);
         textPaint.setFakeBoldText(true);
-        textPaint.setColor(TEXT);
+        textPaint.setColor(palette.text);
         textPaint.setTextSize(sp(17));
         canvas.drawText("最近趋势", x + dp(14), y + dp(30), textPaint);
 
@@ -206,10 +208,10 @@ final class MonitorDashboardView extends View {
         float chartX = x + dp(34);
         float chartY = y + dp(50);
         float chartW = width - dp(50);
-        float chartH = height - dp(84);
+        float chartH = Math.max(dp(96), height - dp(84));
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(1f);
-        paint.setColor(LINE);
+        paint.setColor(palette.line);
         for (int i = 0; i <= 3; i++) {
             float lineY = chartY + chartH * i / 3f;
             canvas.drawLine(chartX, lineY, chartX + chartW, lineY, paint);
@@ -258,7 +260,7 @@ final class MonitorDashboardView extends View {
 
     private void drawYAxisLabels(Canvas canvas, float x, float y, float height) {
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
+        textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(10));
         textPaint.setTextAlign(Paint.Align.RIGHT);
         canvas.drawText("100", x - dp(6), y + dp(4), textPaint);
@@ -271,11 +273,11 @@ final class MonitorDashboardView extends View {
         if (history.isEmpty()) {
             return;
         }
-        paint.setColor(LINE);
+        paint.setColor(palette.line);
         paint.setStrokeWidth(1f);
         canvas.drawLine(x, y, x + width, y, paint);
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
+        textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(10));
         int last = history.size() - 1;
         drawAxisTime(canvas, x, y + dp(18), history.get(0).timestampMs, Paint.Align.LEFT);
@@ -294,7 +296,7 @@ final class MonitorDashboardView extends View {
         rect.set(x, y, x + width, y + dp(28));
         canvas.drawRoundRect(rect, dp(8), dp(8), paint);
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
+        textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(11));
         canvas.drawText(label, x + dp(10), y + dp(18), textPaint);
         textPaint.setFakeBoldText(true);
@@ -309,7 +311,7 @@ final class MonitorDashboardView extends View {
         paint.setColor(color);
         canvas.drawCircle(x, y, dp(4), paint);
         textPaint.setFakeBoldText(false);
-        textPaint.setColor(MUTED);
+        textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(11));
         canvas.drawText(label, x + dp(8), y + dp(4), textPaint);
     }
@@ -337,7 +339,7 @@ final class MonitorDashboardView extends View {
 
     private int tempColor(float temp) {
         if (Float.isNaN(temp)) {
-            return MUTED;
+            return palette.muted;
         }
         if (temp >= 45f) {
             return RED;
@@ -392,5 +394,39 @@ final class MonitorDashboardView extends View {
 
     private float sp(float value) {
         return value * getResources().getDisplayMetrics().scaledDensity;
+    }
+
+    private static final class Palette {
+        final int bg;
+        final int surface;
+        final int text;
+        final int muted;
+        final int line;
+
+        Palette(int bg, int surface, int text, int muted, int line) {
+            this.bg = bg;
+            this.surface = surface;
+            this.text = text;
+            this.muted = muted;
+            this.line = line;
+        }
+
+        static Palette defaultStyle() {
+            return new Palette(
+                    Color.rgb(246, 247, 251),
+                    Color.WHITE,
+                    Color.rgb(23, 32, 51),
+                    Color.rgb(102, 112, 133),
+                    Color.rgb(229, 231, 235));
+        }
+
+        static Palette nightStyle() {
+            return new Palette(
+                    Color.rgb(16, 23, 34),
+                    Color.rgb(25, 35, 50),
+                    Color.rgb(232, 238, 247),
+                    Color.rgb(148, 163, 184),
+                    Color.rgb(55, 65, 81));
+        }
     }
 }
