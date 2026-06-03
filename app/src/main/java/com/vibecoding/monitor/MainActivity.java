@@ -27,6 +27,8 @@ public final class MainActivity extends Activity {
     private static final int PIN_WIDGET_REQUEST_CODE = 1001;
     private static final String PREFS = "ui_prefs";
     private static final String KEY_DISPLAY_STYLE = "display_style";
+    private static final float HIGH_TEMP_WARNING_C = 70f;
+    private static final float HIGH_TEMP_RESET_C = 65f;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private MetricSampler sampler;
@@ -37,6 +39,7 @@ public final class MainActivity extends Activity {
     private DisplayStyle displayStyle = DisplayStyle.DEFAULT;
     private Button styleButton;
     private ScrollView dashboardScrollView;
+    private boolean highTempWarningShown;
 
     private final Runnable refreshRunnable = new Runnable() {
         @Override
@@ -46,6 +49,7 @@ public final class MainActivity extends Activity {
             dashboardView.setSnapshot(snapshot);
             dashboardView.setHistory(historyStore.load());
             MonitorWidgetProvider.updateAllWidgets(MainActivity.this, snapshot);
+            maybeShowHighTempWarning(snapshot);
             handler.postDelayed(this, 2000L);
         }
     };
@@ -191,6 +195,27 @@ public final class MainActivity extends Activity {
         } else {
             startService(intent);
         }
+    }
+
+    private void maybeShowHighTempWarning(MetricSnapshot snapshot) {
+        float temp = snapshot.displayTempC();
+        if (Float.isNaN(temp)) {
+            return;
+        }
+        if (temp < HIGH_TEMP_RESET_C) {
+            highTempWarningShown = false;
+            return;
+        }
+        if (temp < HIGH_TEMP_WARNING_C || highTempWarningShown || isFinishing()) {
+            return;
+        }
+        highTempWarningShown = true;
+        new AlertDialog.Builder(this)
+                .setTitle("温度过高警告")
+                .setMessage("当前温度已达到 " + Math.round(temp)
+                        + "°C，超过 70°C 阈值。\n\n建议立即停止高负载任务、关闭充电或让设备散热。")
+                .setPositiveButton("知道了", null)
+                .show();
     }
 
     private void requestAddWidget() {

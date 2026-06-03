@@ -1,9 +1,9 @@
 {
-  "versionCode": 10,
-  "versionName": "1.9-beta",
+  "versionCode": 11,
+  "versionName": "2.0-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1455381,
-  "sha256": "f65d30c8b7a8bb6933054d28f224956ac61b27f44e00ad10c8d166f5c86cd7ff",
+  "apkSize": 1455790,
+  "sha256": "04d01c4f4fd1305706b56798f8328fb0f96ee1fb9a6cdc96fb12a0a7c01d0016",
   "publishedAt": "2026-06-03",
-  "notes": "优化指标卡与趋势图间距：提高指标卡高度并下移滑条，避免副标题与滑条重叠；增加趋势图底部留白，分离横轴标签和左右滑动提示。"
+  "notes": "新增高温弹窗告警：当前台监控检测到手机温度高于70°C时弹出温度过高警告，温度降至65°C以下后才允许再次提醒。"
 }
