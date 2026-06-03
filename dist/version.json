@@ -1,9 +1,9 @@
 {
-  "versionCode": 4,
-  "versionName": "1.3-beta",
+  "versionCode": 5,
+  "versionName": "1.4-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1446947,
-  "sha256": "0fde6758772eb67ec08e51adf906f3cd6f474f76d72b02e17731df7b492d537d",
+  "apkSize": 1449102,
+  "sha256": "18a7041cbbe0dbf442ca0fa43c37be2794843baad7c8b42acec847ca296b5cba",
   "publishedAt": "2026-06-03",
-  "notes": "新增手动检查更新入口、详细版本清单展示、下载进度、APK 大小校验和 SHA-256 校验失败提示。"
+  "notes": "增强添加桌面小组件流程：补充小组件 label/icon/previewLayout，新增添加请求回调、桌面支持状态诊断和手动添加兜底指引。"
 }
