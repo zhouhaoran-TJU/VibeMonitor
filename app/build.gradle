@@ -10,8 +10,8 @@ android {
         applicationId "com.vibecoding.monitor"
         minSdk 23
         targetSdk 33
-        versionCode 9
-        versionName "1.8-beta"
+        versionCode 10
+        versionName "1.9-beta"
         buildConfigField "String", "UPDATE_MANIFEST_URL", "\"https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/version.json\""
     }
 

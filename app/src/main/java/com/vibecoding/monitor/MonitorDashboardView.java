@@ -101,16 +101,16 @@ final class MonitorDashboardView extends View {
 
         float gap = dp(8);
         float cardWidth = (right - left - gap) / 2f;
-        drawMetricCard(canvas, left, y, cardWidth, dp(82), "CPU", formatPercent(snapshot.cpuPercent),
+        drawMetricCard(canvas, left, y, cardWidth, dp(92), "CPU", formatPercent(snapshot.cpuPercent),
                 snapshot.coreCount + " 核", BLUE, snapshot.cpuPercent);
-        drawMetricCard(canvas, left + cardWidth + gap, y, cardWidth, dp(82), "内存",
+        drawMetricCard(canvas, left + cardWidth + gap, y, cardWidth, dp(92), "内存",
                 formatPercent(snapshot.memoryPercent), "已使用", GREEN, snapshot.memoryPercent);
-        y += dp(92);
-        drawMetricCard(canvas, left, y, cardWidth, dp(82), "电量",
+        y += dp(102);
+        drawMetricCard(canvas, left, y, cardWidth, dp(92), "电量",
                 formatPercent(snapshot.batteryPercent), snapshot.batteryState, AMBER, snapshot.batteryPercent);
-        drawMetricCard(canvas, left + cardWidth + gap, y, cardWidth, dp(82), "存储",
+        drawMetricCard(canvas, left + cardWidth + gap, y, cardWidth, dp(92), "存储",
                 formatPercent(snapshot.storagePercent), "内部空间", CYAN, snapshot.storagePercent);
-        y += dp(94);
+        y += dp(104);
 
         drawTrend(canvas, left, y, right - left, Math.max(dp(190), getHeight() - y - getPaddingBottom()));
     }
@@ -207,11 +207,11 @@ final class MonitorDashboardView extends View {
 
         textPaint.setFakeBoldText(false);
         textPaint.setColor(palette.muted);
-        textPaint.setTextSize(sp(11));
-        canvas.drawText(subtitle, x + dp(12), y + dp(70), textPaint);
+        textPaint.setTextSize(sp(10));
+        canvas.drawText(subtitle, x + dp(12), y + dp(67), textPaint);
 
         float barX = x + dp(12);
-        float barY = y + height - dp(15);
+        float barY = y + height - dp(12);
         float barW = width - dp(24);
         paint.setColor(palette.line);
         rect.set(barX, barY, barX + barW, barY + dp(5));
@@ -235,7 +235,7 @@ final class MonitorDashboardView extends View {
         float chartX = x + dp(34);
         float chartY = y + dp(50);
         float chartW = width - dp(50);
-        float chartH = Math.max(dp(96), height - dp(84));
+        float chartH = Math.max(dp(96), height - dp(110));
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(1f);
         paint.setColor(palette.line);
@@ -246,7 +246,7 @@ final class MonitorDashboardView extends View {
         drawYAxisLabels(canvas, chartX, chartY, chartH);
         drawTimeAxis(canvas, chartX, chartY + chartH, chartW);
         drawHistory(canvas, chartX, chartY, chartW, chartH, RED, 80f);
-        drawWindowHint(canvas, x, y, width, height);
+        drawWindowHint(canvas, x, chartY + chartH + dp(42), width);
         paint.setStyle(Paint.Style.FILL);
     }
 
@@ -312,12 +312,12 @@ final class MonitorDashboardView extends View {
         drawAxisTime(canvas, x + width, y + dp(18), trendEndMs, Paint.Align.RIGHT);
     }
 
-    private void drawWindowHint(Canvas canvas, float x, float y, float width, float height) {
+    private void drawWindowHint(Canvas canvas, float x, float y, float width) {
         textPaint.setFakeBoldText(false);
         textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(10));
         textPaint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText("左右滑动查看24小时历史", x + width / 2f, y + height - dp(18), textPaint);
+        canvas.drawText("左右滑动查看24小时历史", x + width / 2f, y, textPaint);
         textPaint.setTextAlign(Paint.Align.LEFT);
     }
 

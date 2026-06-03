@@ -1,9 +1,9 @@
 {
-  "versionCode": 9,
-  "versionName": "1.8-beta",
+  "versionCode": 10,
+  "versionName": "1.9-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1455356,
-  "sha256": "79567d4e06aef0ff6f8b76258453d4e21f2051e59b1267088fa8463c079c2bd5",
+  "apkSize": 1455381,
+  "sha256": "f65d30c8b7a8bb6933054d28f224956ac61b27f44e00ad10c8d166f5c86cd7ff",
   "publishedAt": "2026-06-03",
-  "notes": "优化页面排版：仪表盘改为可滚动内容区，缩短顶部按钮文案，拆分标题区长文本，减少小屏和大字体下的文字重叠。"
+  "notes": "优化指标卡与趋势图间距：提高指标卡高度并下移滑条，避免副标题与滑条重叠；增加趋势图底部留白，分离横轴标签和左右滑动提示。"
 }

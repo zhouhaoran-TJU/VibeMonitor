@@ -126,10 +126,10 @@ public final class MainActivity extends Activity {
         dashboardScrollView = new ScrollView(this);
         dashboardScrollView.setFillViewport(false);
         dashboardScrollView.setBackgroundColor(displayStyle == DisplayStyle.NIGHT ? 0xff101722 : 0xfff6f7fb);
-        dashboardView.setMinimumHeight(dp(760));
+        dashboardView.setMinimumHeight(dp(800));
         dashboardScrollView.addView(dashboardView, new ScrollView.LayoutParams(
                 ScrollView.LayoutParams.MATCH_PARENT,
-                dp(760)));
+                dp(800)));
         root.addView(dashboardScrollView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
