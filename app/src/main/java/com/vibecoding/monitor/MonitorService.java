@@ -121,9 +121,9 @@ public final class MonitorService extends Service {
                 : new Notification.Builder(this);
         Notification notification = builder
                 .setSmallIcon(R.drawable.ic_launcher)
-                .setContentTitle("温度过高警告")
-                .setContentText("当前温度 " + Math.round(temp)
-                        + "°C，超过 " + TemperatureWarningSettings.formatThreshold(threshold))
+                .setContentTitle("! 高温警告")
+                .setContentText(Math.round(temp) + "°C 已超过 "
+                        + TemperatureWarningSettings.formatThreshold(threshold))
                 .setContentIntent(alertPendingIntent)
                 .setFullScreenIntent(alertPendingIntent, true)
                 .setPriority(Notification.PRIORITY_MAX)

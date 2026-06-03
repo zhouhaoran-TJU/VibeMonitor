@@ -222,10 +222,10 @@ public final class MainActivity extends Activity {
         }
         highTempWarningShown = true;
         new AlertDialog.Builder(this)
-                .setTitle("温度过高警告")
-                .setMessage("当前温度已达到 " + Math.round(temp)
-                        + "°C，超过 " + TemperatureWarningSettings.formatThreshold(threshold)
-                        + " 阈值。\n\n建议立即停止高负载任务、关闭充电或让设备散热。")
+                .setTitle("! 高温警告")
+                .setMessage(Math.round(temp) + "°C 已超过 "
+                        + TemperatureWarningSettings.formatThreshold(threshold)
+                        + "\n请立即降载散热")
                 .setPositiveButton("知道了", null)
                 .show();
     }

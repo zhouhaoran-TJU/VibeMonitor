@@ -1,9 +1,9 @@
 {
-  "versionCode": 13,
-  "versionName": "2.2-beta",
+  "versionCode": 14,
+  "versionName": "2.3-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1459352,
-  "sha256": "64fa0074357243834f11acaf0f35205161008b7e2b3faf8d46c680c9a518b5fe",
+  "apkSize": 1459515,
+  "sha256": "f019c2459d655a079a236ee451517d531e210ebf567b95b77116bee79ba21dd5",
   "publishedAt": "2026-06-03",
-  "notes": "高温告警升级为全局提醒：后台服务检测到温度超过阈值时发送高优先级通知和全屏告警页，即使 App 在后台也能提醒用户。"
+  "notes": "优化高温告警样式：全屏告警页新增危险叹号标识，前台弹窗、全屏页和通知文案更简洁。"
 }

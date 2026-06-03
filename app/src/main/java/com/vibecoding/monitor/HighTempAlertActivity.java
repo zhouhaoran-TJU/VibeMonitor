@@ -1,6 +1,7 @@
 package com.vibecoding.monitor;
 
 import android.app.Activity;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -37,15 +38,29 @@ public final class HighTempAlertActivity extends Activity {
         root.setPadding(dp(24), dp(28), dp(24), dp(28));
         root.setBackgroundColor(0xff111827);
 
+        TextView dangerIcon = new TextView(this);
+        dangerIcon.setText("!");
+        dangerIcon.setTextColor(0xffffffff);
+        dangerIcon.setTextSize(36f);
+        dangerIcon.setGravity(Gravity.CENTER);
+        dangerIcon.setTypeface(null, android.graphics.Typeface.BOLD);
+        GradientDrawable iconBg = new GradientDrawable();
+        iconBg.setShape(GradientDrawable.OVAL);
+        iconBg.setColor(0xffff4757);
+        dangerIcon.setBackground(iconBg);
+        root.addView(dangerIcon, new LinearLayout.LayoutParams(dp(72), dp(72)));
+
         TextView title = new TextView(this);
-        title.setText("温度过高警告");
+        title.setText("高温警告");
         title.setTextColor(0xffffffff);
         title.setTextSize(24f);
         title.setGravity(Gravity.CENTER);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        titleParams.topMargin = dp(18);
+        root.addView(title, titleParams);
 
         TextView value = new TextView(this);
         value.setText(formatTemp(temp));
@@ -60,8 +75,8 @@ public final class HighTempAlertActivity extends Activity {
         root.addView(value, valueParams);
 
         TextView message = new TextView(this);
-        message.setText("当前温度超过 " + TemperatureWarningSettings.formatThreshold(threshold)
-                + " 阈值。\n请立即停止高负载任务、关闭充电或让设备散热。");
+        message.setText("已超过 " + TemperatureWarningSettings.formatThreshold(threshold)
+                + "\n请立即降载散热");
         message.setTextColor(0xffd1d5db);
         message.setTextSize(16f);
         message.setGravity(Gravity.CENTER);
