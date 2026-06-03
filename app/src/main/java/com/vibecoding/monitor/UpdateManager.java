@@ -2,6 +2,7 @@ package com.vibecoding.monitor;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -35,12 +36,29 @@ final class UpdateManager {
     }
 
     void checkOnLaunch() {
+        check(false);
+    }
+
+    void checkManually() {
+        Toast.makeText(activity, "正在检查更新", Toast.LENGTH_SHORT).show();
+        check(true);
+    }
+
+    private void check(final boolean manual) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     final ReleaseInfo info = fetchReleaseInfo();
                     if (info.versionCode <= BuildConfig.VERSION_CODE) {
+                        if (manual) {
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    showLatestDialog(info);
+                                }
+                            });
+                        }
                         return;
                     }
                     activity.runOnUiThread(new Runnable() {
@@ -49,8 +67,15 @@ final class UpdateManager {
                             showUpdateDialog(info);
                         }
                     });
-                } catch (Exception ignored) {
-                    // 更新检查不应影响监控主流程。
+                } catch (final Exception error) {
+                    if (manual) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                showCheckFailedDialog(error);
+                            }
+                        });
+                    }
                 }
             }
         }, "update-check");
@@ -66,16 +91,14 @@ final class UpdateManager {
                 object.getString("apkUrl"),
                 object.optLong("apkSize", 0L),
                 object.optString("sha256", ""),
-                object.optString("notes", "发现新版本"));
+                object.optString("notes", "发现新版本"),
+                object.optString("publishedAt", ""));
     }
 
     private void showUpdateDialog(final ReleaseInfo info) {
-        String message = "版本：" + info.versionName
-                + "\n大小：" + formatSize(info.apkSize)
-                + "\n\n" + info.notes;
         new AlertDialog.Builder(activity)
                 .setTitle("发现新版本")
-                .setMessage(message)
+                .setMessage(buildReleaseMessage(info))
                 .setNegativeButton("稍后", null)
                 .setPositiveButton("下载更新", new DialogInterface.OnClickListener() {
                     @Override
@@ -86,22 +109,46 @@ final class UpdateManager {
                 .show();
     }
 
+    private void showLatestDialog(ReleaseInfo info) {
+        new AlertDialog.Builder(activity)
+                .setTitle("已是最新版本")
+                .setMessage(buildReleaseMessage(info))
+                .setPositiveButton("知道了", null)
+                .show();
+    }
+
+    private void showCheckFailedDialog(Exception error) {
+        new AlertDialog.Builder(activity)
+                .setTitle("检查更新失败")
+                .setMessage("当前版本：" + BuildConfig.VERSION_NAME
+                        + " (" + BuildConfig.VERSION_CODE + ")"
+                        + "\n清单地址：" + BuildConfig.UPDATE_MANIFEST_URL
+                        + "\n失败原因：" + readableError(error))
+                .setPositiveButton("知道了", null)
+                .show();
+    }
+
     private void downloadAndInstall(final ReleaseInfo info) {
-        Toast.makeText(activity, "开始下载更新", Toast.LENGTH_SHORT).show();
+        final ProgressDialog progressDialog = new ProgressDialog(activity);
+        progressDialog.setTitle("下载更新");
+        progressDialog.setMessage("正在连接服务器");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setIndeterminate(info.apkSize <= 0L);
+        progressDialog.setMax(info.apkSize > 0L ? 100 : 0);
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    File apk = downloadApk(info.apkUrl);
-                    if (!info.sha256.isEmpty()) {
-                        String actual = sha256(apk);
-                        if (!info.sha256.equalsIgnoreCase(actual)) {
-                            throw new IllegalStateException("安装包校验失败");
-                        }
-                    }
+                    File apk = downloadApk(info, progressDialog);
+                    verifyApk(info, apk);
                     activity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            progressDialog.dismiss();
+                            Toast.makeText(activity, "下载完成，准备安装", Toast.LENGTH_SHORT).show();
                             install(apk);
                         }
                     });
@@ -109,7 +156,8 @@ final class UpdateManager {
                     activity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(activity, error.getMessage(), Toast.LENGTH_LONG).show();
+                            progressDialog.dismiss();
+                            showDownloadFailedDialog(error);
                         }
                     });
                 }
@@ -118,24 +166,66 @@ final class UpdateManager {
         thread.start();
     }
 
-    private File downloadApk(String apkUrl) throws Exception {
+    private File downloadApk(final ReleaseInfo info, final ProgressDialog progressDialog) throws Exception {
         File dir = new File(activity.getCacheDir(), "downloads");
         if (!dir.exists() && !dir.mkdirs()) {
             throw new IllegalStateException("无法创建下载目录");
         }
         File apk = new File(dir, "VibeMonitor-beta.apk");
-        HttpURLConnection connection = open(apkUrl);
+        HttpURLConnection connection = open(info.apkUrl);
+        final long total = info.apkSize > 0L ? info.apkSize : connection.getContentLengthLong();
         try (InputStream input = new BufferedInputStream(connection.getInputStream());
              FileOutputStream output = new FileOutputStream(apk)) {
             byte[] buffer = new byte[8192];
             int read;
+            long downloaded = 0L;
             while ((read = input.read(buffer)) != -1) {
                 output.write(buffer, 0, read);
+                downloaded += read;
+                publishProgress(progressDialog, downloaded, total);
             }
         } finally {
             connection.disconnect();
         }
         return apk;
+    }
+
+    private void publishProgress(final ProgressDialog dialog, final long downloaded, final long total) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (total > 0L) {
+                    int progress = Math.min(100, Math.round(downloaded * 100f / total));
+                    dialog.setIndeterminate(false);
+                    dialog.setProgress(progress);
+                    dialog.setMessage(formatSize(downloaded) + " / " + formatSize(total));
+                } else {
+                    dialog.setMessage(formatSize(downloaded));
+                }
+            }
+        });
+    }
+
+    private void verifyApk(ReleaseInfo info, File apk) throws Exception {
+        if (info.apkSize > 0L && apk.length() != info.apkSize) {
+            throw new IllegalStateException("安装包大小不一致，期望 "
+                    + info.apkSize + "，实际 " + apk.length());
+        }
+        if (!info.sha256.isEmpty()) {
+            String actual = sha256(apk);
+            if (!info.sha256.equalsIgnoreCase(actual)) {
+                throw new IllegalStateException("安装包 SHA-256 校验失败\n期望："
+                        + info.sha256 + "\n实际：" + actual);
+            }
+        }
+    }
+
+    private void showDownloadFailedDialog(Exception error) {
+        new AlertDialog.Builder(activity)
+                .setTitle("下载更新失败")
+                .setMessage(readableError(error))
+                .setPositiveButton("知道了", null)
+                .show();
     }
 
     private void install(File apk) {
@@ -214,6 +304,26 @@ final class UpdateManager {
         return String.format(Locale.CHINA, "%.1f MB", bytes / 1024f / 1024f);
     }
 
+    private String buildReleaseMessage(ReleaseInfo info) {
+        String publishedAt = info.publishedAt.isEmpty() ? "未提供" : info.publishedAt;
+        String sha = info.sha256.isEmpty() ? "未提供" : info.sha256;
+        return "当前版本：" + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")"
+                + "\n远端版本：" + info.versionName + " (" + info.versionCode + ")"
+                + "\nAPK 大小：" + formatSize(info.apkSize)
+                + "\n发布时间：" + publishedAt
+                + "\nSHA-256：" + sha
+                + "\n\n更新说明：\n" + info.notes
+                + "\n\n下载地址：\n" + info.apkUrl;
+    }
+
+    private String readableError(Exception error) {
+        String message = error.getMessage();
+        if (message == null || message.trim().isEmpty()) {
+            return error.getClass().getSimpleName();
+        }
+        return message;
+    }
+
     private static final class ReleaseInfo {
         final int versionCode;
         final String versionName;
@@ -221,14 +331,23 @@ final class UpdateManager {
         final long apkSize;
         final String sha256;
         final String notes;
+        final String publishedAt;
 
-        ReleaseInfo(int versionCode, String versionName, String apkUrl, long apkSize, String sha256, String notes) {
+        ReleaseInfo(
+                int versionCode,
+                String versionName,
+                String apkUrl,
+                long apkSize,
+                String sha256,
+                String notes,
+                String publishedAt) {
             this.versionCode = versionCode;
             this.versionName = versionName;
             this.apkUrl = apkUrl;
             this.apkSize = apkSize;
             this.sha256 = sha256;
             this.notes = notes;
+            this.publishedAt = publishedAt;
         }
     }
 }

@@ -1,8 +1,9 @@
 {
-  "versionCode": 3,
-  "versionName": "1.2-beta",
+  "versionCode": 4,
+  "versionName": "1.3-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1444528,
-  "sha256": "d76b95a032aa8966ce6a025b55af3a68e54000c9088607dec5a661af1b4658d0",
-  "notes": "新增 App 内添加桌面小组件入口，解决部分桌面小组件列表不显示的问题。"
+  "apkSize": 1446947,
+  "sha256": "0fde6758772eb67ec08e51adf906f3cd6f474f76d72b02e17731df7b492d537d",
+  "publishedAt": "2026-06-03",
+  "notes": "新增手动检查更新入口、详细版本清单展示、下载进度、APK 大小校验和 SHA-256 校验失败提示。"
 }

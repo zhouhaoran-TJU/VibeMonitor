@@ -12,12 +12,14 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public final class MainActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private MetricSampler sampler;
     private MonitorDashboardView dashboardView;
+    private UpdateManager updateManager;
 
     private final Runnable refreshRunnable = new Runnable() {
         @Override
@@ -34,8 +36,9 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         sampler = new MetricSampler(this);
         dashboardView = new MonitorDashboardView(this);
+        updateManager = new UpdateManager(this);
         setContentView(buildContentView());
-        new UpdateManager(this).checkOnLaunch();
+        updateManager.checkOnLaunch();
     }
 
     @Override
@@ -57,22 +60,43 @@ public final class MainActivity extends Activity {
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
 
-        Button addWidgetButton = new Button(this);
-        addWidgetButton.setText("添加小组件");
-        addWidgetButton.setTextSize(13f);
-        addWidgetButton.setAllCaps(false);
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.VERTICAL);
+
+        Button updateButton = buildActionButton("检查更新");
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                updateManager.checkManually();
+            }
+        });
+        actions.addView(updateButton, new LinearLayout.LayoutParams(dp(116), dp(42)));
+
+        Button addWidgetButton = buildActionButton("添加小组件");
         addWidgetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 requestAddWidget();
             }
         });
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(116), dp(42));
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(dp(116), dp(42));
+        buttonParams.topMargin = dp(6);
+        actions.addView(addWidgetButton, buttonParams);
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(dp(116), dp(90));
         params.gravity = Gravity.TOP | Gravity.RIGHT;
         params.topMargin = dp(14);
         params.rightMargin = dp(18);
-        root.addView(addWidgetButton, params);
+        root.addView(actions, params);
         return root;
+    }
+
+    private Button buildActionButton(String label) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setTextSize(13f);
+        button.setAllCaps(false);
+        return button;
     }
 
     private void requestAddWidget() {
