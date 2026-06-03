@@ -16,9 +16,11 @@ import android.os.Bundle;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
@@ -27,8 +29,9 @@ public final class MainActivity extends Activity {
     private static final int PIN_WIDGET_REQUEST_CODE = 1001;
     private static final String PREFS = "ui_prefs";
     private static final String KEY_DISPLAY_STYLE = "display_style";
-    private static final float HIGH_TEMP_WARNING_C = 70f;
-    private static final float HIGH_TEMP_RESET_C = 65f;
+    private static final String KEY_HIGH_TEMP_WARNING_C = "high_temp_warning_c";
+    private static final float DEFAULT_HIGH_TEMP_WARNING_C = 70f;
+    private static final float HIGH_TEMP_RESET_GAP_C = 5f;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private MetricSampler sampler;
@@ -113,6 +116,17 @@ public final class MainActivity extends Activity {
         buttonParams.leftMargin = dp(8);
         actions.addView(addWidgetButton, buttonParams);
 
+        Button thresholdButton = buildActionButton("阈值");
+        thresholdButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showThresholdDialog();
+            }
+        });
+        LinearLayout.LayoutParams thresholdParams = new LinearLayout.LayoutParams(0, dp(40), 0.8f);
+        thresholdParams.leftMargin = dp(8);
+        actions.addView(thresholdButton, thresholdParams);
+
         styleButton = buildActionButton(styleLabel());
         styleButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -175,7 +189,7 @@ public final class MainActivity extends Activity {
     }
 
     private String styleLabel() {
-        return displayStyle == DisplayStyle.NIGHT ? "暗夜风" : "默认";
+        return displayStyle == DisplayStyle.NIGHT ? "暗夜" : "默认";
     }
 
     private void requestNotificationPermission() {
@@ -202,20 +216,76 @@ public final class MainActivity extends Activity {
         if (Float.isNaN(temp)) {
             return;
         }
-        if (temp < HIGH_TEMP_RESET_C) {
+        float threshold = highTempWarningThreshold();
+        if (temp < threshold - HIGH_TEMP_RESET_GAP_C) {
             highTempWarningShown = false;
             return;
         }
-        if (temp < HIGH_TEMP_WARNING_C || highTempWarningShown || isFinishing()) {
+        if (temp < threshold || highTempWarningShown || isFinishing()) {
             return;
         }
         highTempWarningShown = true;
         new AlertDialog.Builder(this)
                 .setTitle("温度过高警告")
                 .setMessage("当前温度已达到 " + Math.round(temp)
-                        + "°C，超过 70°C 阈值。\n\n建议立即停止高负载任务、关闭充电或让设备散热。")
+                        + "°C，超过 " + formatThreshold(threshold)
+                        + " 阈值。\n\n建议立即停止高负载任务、关闭充电或让设备散热。")
                 .setPositiveButton("知道了", null)
                 .show();
+    }
+
+    private void showThresholdDialog() {
+        final EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setText(formatThresholdValue(highTempWarningThreshold()));
+        input.setSelectAllOnFocus(true);
+        input.setHint("例如 70");
+        int padding = dp(20);
+        input.setPadding(padding, dp(8), padding, dp(8));
+
+        new AlertDialog.Builder(this)
+                .setTitle("高温告警阈值")
+                .setMessage("输入温度阈值，单位 °C。当前温度达到该值时会弹出告警。")
+                .setView(input)
+                .setNegativeButton("取消", null)
+                .setPositiveButton("保存", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        saveThreshold(input.getText().toString());
+                    }
+                })
+                .show();
+    }
+
+    private void saveThreshold(String raw) {
+        try {
+            float value = Float.parseFloat(raw.trim());
+            if (value < 30f || value > 120f) {
+                Toast.makeText(this, "请输入 30 到 120 之间的温度", Toast.LENGTH_LONG).show();
+                return;
+            }
+            uiPrefs.edit().putFloat(KEY_HIGH_TEMP_WARNING_C, value).apply();
+            highTempWarningShown = false;
+            Toast.makeText(this, "告警阈值已设为 " + formatThreshold(value), Toast.LENGTH_SHORT).show();
+        } catch (NumberFormatException error) {
+            Toast.makeText(this, "请输入有效数字", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private float highTempWarningThreshold() {
+        return uiPrefs.getFloat(KEY_HIGH_TEMP_WARNING_C, DEFAULT_HIGH_TEMP_WARNING_C);
+    }
+
+    private String formatThreshold(float value) {
+        return formatThresholdValue(value) + "°C";
+    }
+
+    private String formatThresholdValue(float value) {
+        if (Math.abs(value - Math.round(value)) < 0.05f) {
+            return String.valueOf(Math.round(value));
+        }
+        return String.format(java.util.Locale.US, "%.1f", value);
     }
 
     private void requestAddWidget() {
