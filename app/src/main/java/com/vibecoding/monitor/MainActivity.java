@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,6 +12,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
@@ -25,6 +27,7 @@ public final class MainActivity extends Activity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private MetricSampler sampler;
+    private MetricHistoryStore historyStore;
     private MonitorDashboardView dashboardView;
     private UpdateManager updateManager;
 
@@ -32,7 +35,9 @@ public final class MainActivity extends Activity {
         @Override
         public void run() {
             MetricSnapshot snapshot = sampler.sample();
+            historyStore.append(snapshot);
             dashboardView.setSnapshot(snapshot);
+            dashboardView.setHistory(historyStore.load());
             MonitorWidgetProvider.updateAllWidgets(MainActivity.this, snapshot);
             handler.postDelayed(this, 2000L);
         }
@@ -42,9 +47,12 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         sampler = new MetricSampler(this);
+        historyStore = new MetricHistoryStore(this);
         dashboardView = new MonitorDashboardView(this);
         updateManager = new UpdateManager(this);
         setContentView(buildContentView());
+        requestNotificationPermission();
+        startMonitorService();
         updateManager.checkOnLaunch();
     }
 
@@ -104,6 +112,25 @@ public final class MainActivity extends Activity {
         button.setTextSize(13f);
         button.setAllCaps(false);
         return button;
+    }
+
+    private void requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT < 33) {
+            return;
+        }
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 2001);
+    }
+
+    private void startMonitorService() {
+        Intent intent = new Intent(this, MonitorService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
     }
 
     private void requestAddWidget() {

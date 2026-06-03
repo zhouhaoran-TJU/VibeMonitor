@@ -1,9 +1,9 @@
 {
-  "versionCode": 5,
-  "versionName": "1.4-beta",
+  "versionCode": 6,
+  "versionName": "1.5-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1449102,
-  "sha256": "18a7041cbbe0dbf442ca0fa43c37be2794843baad7c8b42acec847ca296b5cba",
+  "apkSize": 1452701,
+  "sha256": "e927f73c2972082f9013e65ccf64f89c129cfc60249ead33ca353abca15f608d",
   "publishedAt": "2026-06-03",
-  "notes": "增强添加桌面小组件流程：补充小组件 label/icon/previewLayout，新增添加请求回调、桌面支持状态诊断和手动添加兜底指引。"
+  "notes": "优化主界面排版，新增前台服务后台持续监控记录、历史样本持久化，并在最近趋势图中加入时间轴。"
 }
