@@ -5,7 +5,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -19,11 +18,6 @@ public final class HighTempAlertActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-                        | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                        | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         float temp = getIntent().getFloatExtra(EXTRA_TEMP_C, Float.NaN);
         float threshold = getIntent().getFloatExtra(
                 EXTRA_THRESHOLD_C,

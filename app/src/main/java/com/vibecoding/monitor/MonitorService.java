@@ -103,9 +103,6 @@ public final class MonitorService extends Service {
     }
 
     private void showHighTempAlert(float temp, float threshold) {
-        if (HighTempOverlay.show(this, temp, threshold)) {
-            return;
-        }
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (manager == null) {
             return;
@@ -128,8 +125,9 @@ public final class MonitorService extends Service {
                 .setContentText(Math.round(temp) + "°C 已超过 "
                         + TemperatureWarningSettings.formatThreshold(threshold))
                 .setContentIntent(alertPendingIntent)
-                .setFullScreenIntent(alertPendingIntent, true)
                 .setPriority(Notification.PRIORITY_MAX)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setCategory(Notification.CATEGORY_ALARM)
                 .setAutoCancel(true)
                 .build();
@@ -159,7 +157,7 @@ public final class MonitorService extends Service {
                 ALERT_CHANNEL_ID,
                 "高温告警",
                 NotificationManager.IMPORTANCE_HIGH);
-        channel.setDescription("温度超过阈值时弹出全局提醒");
+        channel.setDescription("温度超过阈值时显示横幅和通知栏提醒");
         channel.setShowBadge(true);
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (manager != null) {

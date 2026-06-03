@@ -1,9 +1,9 @@
 {
-  "versionCode": 15,
-  "versionName": "2.4-beta",
+  "versionCode": 16,
+  "versionName": "2.5-beta",
   "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
-  "apkSize": 1461252,
-  "sha256": "0b3bc32a5e3972325b7b6b52cb917b7e00f8d3846dbb77fce4792553dc6dec0e",
+  "apkSize": 1459347,
+  "sha256": "fbd2390256e54993b9bcee3a0ae3f634da8acd32d739b434c2288ca9460c6dbe",
   "publishedAt": "2026-06-03",
-  "notes": "高温告警支持真正覆盖当前 App：新增悬浮窗全局告警，开启“显示在其他应用上层”权限后，后台高温提醒会覆盖正在使用的应用；未授权时回退到高优先级通知和全屏告警页。"
+  "notes": "高温告警改为只在 App 内显示警告；后台超过阈值时发送高优先级通知，系统可在屏幕上方横幅和通知栏提醒，点击通知进入 App 内告警页。"
 }

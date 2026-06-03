@@ -16,8 +16,6 @@ import android.os.Bundle;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.net.Uri;
-import android.provider.Settings;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
@@ -67,7 +65,6 @@ public final class MainActivity extends Activity {
         updateManager = new UpdateManager(this);
         setContentView(buildContentView());
         requestNotificationPermission();
-        requestOverlayPermission();
         startMonitorService();
         updateManager.checkOnLaunch();
     }
@@ -199,25 +196,6 @@ public final class MainActivity extends Activity {
             return;
         }
         requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 2001);
-    }
-
-    private void requestOverlayPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)) {
-            return;
-        }
-        new AlertDialog.Builder(this)
-                .setTitle("开启全局高温提醒")
-                .setMessage("需要允许“显示在其他应用上层”，高温警告才能覆盖当前正在使用的 App。")
-                .setNegativeButton("稍后", null)
-                .setPositiveButton("去开启", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-                        intent.setData(Uri.parse("package:" + getPackageName()));
-                        startActivity(intent);
-                    }
-                })
-                .show();
     }
 
     private void startMonitorService() {

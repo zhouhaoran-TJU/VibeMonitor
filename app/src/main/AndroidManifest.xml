@@ -4,8 +4,6 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:allowBackup="true"
@@ -29,9 +27,7 @@
             android:name=".HighTempAlertActivity"
             android:excludeFromRecents="true"
             android:exported="false"
-            android:showWhenLocked="true"
-            android:theme="@style/AlertTheme"
-            android:turnScreenOn="true" />
+            android:theme="@style/AlertTheme" />
 
         <service
             android:name=".MonitorService"
