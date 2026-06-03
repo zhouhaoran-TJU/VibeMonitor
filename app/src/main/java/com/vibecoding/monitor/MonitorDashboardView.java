@@ -95,7 +95,7 @@ final class MonitorDashboardView extends View {
         textPaint.setTextSize(sp(13));
         canvas.drawText("实时温度、CPU、内存、电量与存储状态", left, y + dp(55), textPaint);
 
-        drawPill(canvas, right - dp(82), y + dp(12), dp(82), dp(28), "实时", GREEN);
+        drawPill(canvas, right - dp(208), y + dp(12), dp(82), dp(28), "实时", GREEN);
     }
 
     private void drawHero(Canvas canvas, float x, float y, float width, float height) {
