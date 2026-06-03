@@ -93,7 +93,7 @@ final class MonitorDashboardView extends View {
         float y = getPaddingTop();
 
         drawHeader(canvas, left, right, y);
-        y += dp(62);
+        y += dp(76);
 
         float heroHeight = dp(164);
         drawHero(canvas, left, y, right - left, heroHeight);
@@ -118,14 +118,18 @@ final class MonitorDashboardView extends View {
     private void drawHeader(Canvas canvas, int left, int right, float y) {
         textPaint.setShader(null);
         textPaint.setColor(palette.text);
-        textPaint.setTextSize(sp(23));
+        textPaint.setTextSize(sp(22));
         textPaint.setFakeBoldText(true);
         canvas.drawText("手机性能监视器", left, y + dp(27), textPaint);
 
         textPaint.setFakeBoldText(false);
         textPaint.setColor(palette.muted);
-        textPaint.setTextSize(sp(12));
-        canvas.drawText("24小时记录 · " + history.size() + " 条样本 · 最高 " + formatTemp(maxTemp24h()), left, y + dp(49), textPaint);
+        textPaint.setTextSize(sp(11));
+        canvas.drawText("24小时记录 · " + history.size() + " 条样本", left, y + dp(47), textPaint);
+        textPaint.setFakeBoldText(true);
+        textPaint.setColor(RED);
+        canvas.drawText("最高 " + formatTemp(maxTemp24h()), left, y + dp(63), textPaint);
+        textPaint.setFakeBoldText(false);
     }
 
     private void drawHero(Canvas canvas, float x, float y, float width, float height) {
@@ -153,15 +157,15 @@ final class MonitorDashboardView extends View {
         float infoX = x + width * 0.55f;
         textPaint.setFakeBoldText(true);
         textPaint.setColor(palette.text);
-        textPaint.setTextSize(sp(18));
+        textPaint.setTextSize(sp(16));
         canvas.drawText(temperatureState(temp), infoX, y + dp(46), textPaint);
         textPaint.setFakeBoldText(false);
         textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(12));
         canvas.drawText("刷新 " + timeFormat.format(new Date(snapshot.timestampMs)), infoX, y + dp(68), textPaint);
 
-        drawCompactRow(canvas, infoX, y + dp(93), width * 0.36f, "电池温度", formatTemp(snapshot.batteryTempC), AMBER);
-        drawCompactRow(canvas, infoX, y + dp(130), width * 0.36f, "CPU 占用", formatPercent(snapshot.cpuPercent), BLUE);
+        drawCompactRow(canvas, infoX, y + dp(92), width * 0.38f, "电池温度", formatTemp(snapshot.batteryTempC), AMBER);
+        drawCompactRow(canvas, infoX, y + dp(128), width * 0.38f, "CPU 占用", formatPercent(snapshot.cpuPercent), BLUE);
     }
 
     private void drawGauge(Canvas canvas, float cx, float cy, float radius, float percent, int color) {
@@ -198,7 +202,7 @@ final class MonitorDashboardView extends View {
 
         textPaint.setFakeBoldText(true);
         textPaint.setColor(palette.text);
-        textPaint.setTextSize(sp(23));
+        textPaint.setTextSize(sp(21));
         canvas.drawText(value, x + dp(12), y + dp(52), textPaint);
 
         textPaint.setFakeBoldText(false);
@@ -313,7 +317,7 @@ final class MonitorDashboardView extends View {
         textPaint.setColor(palette.muted);
         textPaint.setTextSize(sp(10));
         textPaint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText("左右滑动查看24小时历史", x + width / 2f, y + height - dp(12), textPaint);
+        canvas.drawText("左右滑动查看24小时历史", x + width / 2f, y + height - dp(18), textPaint);
         textPaint.setTextAlign(Paint.Align.LEFT);
     }
 

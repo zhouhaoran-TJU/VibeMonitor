@@ -20,6 +20,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 public final class MainActivity extends Activity {
@@ -35,6 +36,7 @@ public final class MainActivity extends Activity {
     private SharedPreferences uiPrefs;
     private DisplayStyle displayStyle = DisplayStyle.DEFAULT;
     private Button styleButton;
+    private ScrollView dashboardScrollView;
 
     private final Runnable refreshRunnable = new Runnable() {
         @Override
@@ -87,7 +89,7 @@ public final class MainActivity extends Activity {
         actions.setGravity(Gravity.CENTER_VERTICAL);
         actions.setPadding(dp(12), dp(8), dp(12), dp(6));
 
-        Button updateButton = buildActionButton("检查更新");
+        Button updateButton = buildActionButton("更新");
         updateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -96,7 +98,7 @@ public final class MainActivity extends Activity {
         });
         actions.addView(updateButton, new LinearLayout.LayoutParams(0, dp(40), 1f));
 
-        Button addWidgetButton = buildActionButton("添加小组件");
+        Button addWidgetButton = buildActionButton("小组件");
         addWidgetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -121,7 +123,14 @@ public final class MainActivity extends Activity {
         root.addView(actions, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 dp(54)));
-        root.addView(dashboardView, new LinearLayout.LayoutParams(
+        dashboardScrollView = new ScrollView(this);
+        dashboardScrollView.setFillViewport(false);
+        dashboardScrollView.setBackgroundColor(displayStyle == DisplayStyle.NIGHT ? 0xff101722 : 0xfff6f7fb);
+        dashboardView.setMinimumHeight(dp(760));
+        dashboardScrollView.addView(dashboardView, new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT,
+                dp(760)));
+        root.addView(dashboardScrollView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
                 1f));
@@ -155,6 +164,9 @@ public final class MainActivity extends Activity {
         View root = dashboardView.getRootView();
         if (root != null) {
             root.setBackgroundColor(displayStyle == DisplayStyle.NIGHT ? 0xff101722 : 0xfff6f7fb);
+        }
+        if (dashboardScrollView != null) {
+            dashboardScrollView.setBackgroundColor(displayStyle == DisplayStyle.NIGHT ? 0xff101722 : 0xfff6f7fb);
         }
     }
 
