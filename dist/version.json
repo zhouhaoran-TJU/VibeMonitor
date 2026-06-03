@@ -1,0 +1,8 @@
+{
+  "versionCode": 2,
+  "versionName": "1.1-beta",
+  "apkUrl": "https://raw.githubusercontent.com/zhouhaoran-TJU/VibeMonitor/main/dist/VibeMonitor-beta.apk",
+  "apkSize": 1443488,
+  "sha256": "4c63d1b8610c9b300559eb2b022f16488f421c46d4e525c0dcd7e98ca1f4299d",
+  "notes": "新增应用内更新检查、APK 下载校验与安装引导，并补齐 beta 发布包。"
+}

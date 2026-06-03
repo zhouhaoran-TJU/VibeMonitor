@@ -1,0 +1,11 @@
+<resources>
+    <color name="app_bg">#F6F7FB</color>
+    <color name="text_main">#172033</color>
+    <color name="text_muted">#667085</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="accent_cool">#0E9F6E</color>
+    <color name="accent_warm">#F59E0B</color>
+    <color name="accent_hot">#E11D48</color>
+    <color name="accent_info">#2563EB</color>
+    <color name="divider">#E5E7EB</color>
+</resources>
